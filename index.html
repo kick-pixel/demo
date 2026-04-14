@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Todo</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: #333;
+      max-width: 480px;
+      margin: 40px auto;
+      padding: 0 16px;
+    }
+    #task-list {
+      list-style: none;
+      border-top: 1px solid #ddd;
+    }
+    #task-list li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid #ddd;
+      word-break: break-word;
+    }
+    .delete-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 18px;
+      color: #999;
+      padding: 4px 8px;
+      min-width: 44px;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .delete-btn:hover { color: #333; }
+    .delete-btn:focus { outline: 2px solid #666; outline-offset: 2px; }
+    #input-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+    }
+    #task-input {
+      flex: 1;
+      padding: 10px 12px;
+      border: 1px solid #ddd;
+      font-size: 16px;
+      font-family: inherit;
+    }
+    #task-input:focus { outline: 2px solid #666; outline-offset: -1px; }
+    #add-btn {
+      padding: 10px 20px;
+      border: 1px solid #333;
+      background: #333;
+      color: #fff;
+      font-size: 16px;
+      font-family: inherit;
+      cursor: pointer;
+    }
+    #add-btn:hover { background: #555; }
+    #add-btn:focus { outline: 2px solid #666; outline-offset: 2px; }
+    #empty-state {
+      text-align: center;
+      padding: 40px 0;
+      color: #999;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <ul id="task-list"></ul>
+  <div id="input-row">
+    <input type="text" id="task-input" placeholder="Add a task..." maxlength="1000" autocomplete="off">
+    <button id="add-btn">Add</button>
+  </div>
+
+  <script>
+    // Data model: {id: string, text: string}
+    // Storage key: todos:v1 (namespaced for future migrations)
+    var STORAGE_KEY = 'todos:v1';
+    var tasks = [];
+
+    // Load tasks from localStorage with error handling for corrupted data
+    function loadTasks() {
+      try {
+        var data = localStorage.getItem(STORAGE_KEY);
+        tasks = data ? JSON.parse(data) : [];
+      } catch (e) {
+        console.error('Failed to load tasks:', e);
+        tasks = [];
+      }
+    }
+
+    // Save tasks to localStorage with quota error handling
+    function saveTasks() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+      } catch (e) {
+        if (e.name === 'QuotaExceededError') {
+          alert('Storage is full. Delete some tasks to free up space.');
+        } else {
+          console.error('Failed to save tasks:', e);
+        }
+      }
+    }
+
+    // Add a new task (validates, trims, truncates to 1000 chars)
+    function addTask(text) {
+      text = (text || '').trim();
+      if (!text) return;
+      if (text.length > 1000) text = text.substring(0, 1000);
+      tasks.push({ id: crypto.randomUUID(), text: text });
+      saveTasks();
+      render();
+    }
+
+    // Delete a task by ID (idempotent)
+    function deleteTask(id) {
+      tasks = tasks.filter(function(t) { return t.id !== id; });
+      saveTasks();
+      render();
+    }
+
+    // Render the task list (uses textContent for XSS safety)
+    function render() {
+      var list = document.getElementById('task-list');
+      list.innerHTML = '';
+
+      if (tasks.length === 0) {
+        var empty = document.createElement('div');
+        empty.id = 'empty-state';
+        empty.textContent = 'No tasks yet — type one above';
+        list.parentNode.insertBefore(empty, list.nextSibling);
+        return;
+      }
+
+      // Remove empty state if it exists
+      var emptyState = document.getElementById('empty-state');
+      if (emptyState) emptyState.remove();
+
+      for (var i = 0; i < tasks.length; i++) {
+        var li = document.createElement('li');
+        var span = document.createElement('span');
+        span.textContent = tasks[i].text; // XSS-safe
+        li.appendChild(span);
+
+        var btn = document.createElement('button');
+        btn.className = 'delete-btn';
+        btn.textContent = 'X';
+        btn.setAttribute('aria-label', 'Delete task');
+        (function(id) {
+          btn.addEventListener('click', function() { deleteTask(id); });
+        })(tasks[i].id);
+
+        li.appendChild(btn);
+        list.appendChild(li);
+      }
+    }
+
+    // Event listeners
+    document.getElementById('add-btn').addEventListener('click', function() {
+      var input = document.getElementById('task-input');
+      addTask(input.value);
+      input.value = '';
+      input.focus();
+    });
+
+    document.getElementById('task-input').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        addTask(e.target.value);
+        e.target.value = '';
+      }
+    });
+
+    // Initialize
+    loadTasks();
+    render();
+  </script>
+</body>
+</html>
