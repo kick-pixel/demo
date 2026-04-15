@@ -1,185 +1,682 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Todo</title>
+  <title>待办事项</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --secondary: #0891b2;
+      --bg-start: #2563eb;
+      --bg-end: #0891b2;
+      --bg-pulse-start: #3b82f6;
+      --bg-pulse-end: #06b6d4;
+      --surface: #ffffff;
+      --text: #333333;
+      --text-secondary: #666666;
+      --text-muted: #999999;
+      --text-disabled: #cccccc;
+      --border: #e0e0e0;
+      --border-light: #f0f0f0;
+      --border-lighter: #f5f5f5;
+      --danger: #e74c3c;
+      --danger-bg: #ffeeee;
+      --bg-muted: #fafafa;
+      --radius-lg: 16px;
+      --radius-md: 10px;
+      --radius-sm: 6px;
+      --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --touch-target: 44px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      color: #333;
+      font-family: var(--font-sans);
+      background: linear-gradient(135deg, var(--bg-start) 0%, var(--bg-end) 100%);
+      min-height: 100vh;
+      padding: 40px 20px;
+      animation: bgPulse 10s ease-in-out infinite;
+    }
+
+    @keyframes bgPulse {
+      0%, 100% {
+        background: linear-gradient(135deg, var(--bg-start) 0%, var(--bg-end) 100%);
+      }
+      50% {
+        background: linear-gradient(135deg, var(--bg-pulse-start) 0%, var(--bg-pulse-end) 100%);
+      }
+    }
+
+    .container {
       max-width: 480px;
-      margin: 40px auto;
-      padding: 0 16px;
+      margin: 0 auto;
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      overflow: hidden;
     }
-    #task-list {
-      list-style: none;
-      border-top: 1px solid #ddd;
+
+    .header {
+      background: linear-gradient(135deg, var(--bg-start) 0%, var(--bg-end) 100%);
+      color: white;
+      padding: 30px;
     }
-    #task-list li {
+
+    .header h1 {
+      font-size: 28px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .header p {
+      opacity: 0.9;
+      font-size: 16px;
+    }
+
+    .input-area {
+      padding: 20px 30px;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .input-wrapper {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px 0;
-      border-bottom: 1px solid #ddd;
-      word-break: break-word;
+      gap: 10px;
     }
-    .delete-btn {
-      background: none;
+
+    #newTodo {
+      flex: 1;
+      padding: 12px 16px;
+      border: 2px solid var(--border);
+      border-radius: var(--radius-md);
+      font-size: 16px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    #newTodo:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+
+    #addBtn {
+      padding: 12px 20px;
+      background: var(--primary);
+      color: white;
       border: none;
+      border-radius: var(--radius-md);
+      font-size: 16px;
       cursor: pointer;
-      font-size: 18px;
-      color: #999;
-      padding: 4px 8px;
-      min-width: 44px;
-      min-height: 44px;
+      transition: background 0.2s;
+      min-height: var(--touch-target);
+    }
+
+    #addBtn:hover {
+      background: var(--primary-dark);
+    }
+
+    #addBtn:active {
+      transform: scale(0.97);
+    }
+
+    .char-counter {
+      text-align: right;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 6px;
+      height: 18px;
+    }
+
+    .char-counter.warn {
+      color: var(--danger);
+    }
+
+    .todo-list {
+      padding: 10px 30px 30px;
+      min-height: 200px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+    }
+
+    .empty-state svg {
+      width: 64px;
+      height: 64px;
+      margin-bottom: 16px;
+      opacity: 0.3;
+    }
+
+    .todo-item {
+      display: flex;
+      align-items: center;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border-lighter);
+      animation: slideIn 0.3s ease;
+      min-height: var(--touch-target);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .todo-item:hover {
+      background: rgba(37, 99, 235, 0.05);
+      margin: 0 -30px;
+      padding-left: 30px;
+      padding-right: 30px;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .todo-checkbox {
+      width: 22px;
+      height: 22px;
+      border: 2px solid var(--border);
+      border-radius: var(--radius-sm);
+      margin-right: 14px;
+      cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
+      transition: all 0.2s;
       flex-shrink: 0;
     }
-    .delete-btn:hover { color: #333; }
-    .delete-btn:focus { outline: 2px solid #666; outline-offset: 2px; }
-    #input-row {
-      display: flex;
-      gap: 8px;
-      margin-top: 16px;
+
+    .todo-checkbox:focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
     }
-    #task-input {
-      flex: 1;
-      padding: 10px 12px;
-      border: 1px solid #ddd;
-      font-size: 16px;
-      font-family: inherit;
+
+    .todo-checkbox:hover {
+      border-color: var(--primary);
     }
-    #task-input:focus { outline: 2px solid #666; outline-offset: -1px; }
-    #add-btn {
-      padding: 10px 20px;
-      border: 1px solid #333;
-      background: #333;
-      color: #fff;
-      font-size: 16px;
-      font-family: inherit;
-      cursor: pointer;
+
+    .todo-checkbox.checked {
+      background: var(--primary);
+      border-color: var(--primary);
     }
-    #add-btn:hover { background: #555; }
-    #add-btn:focus { outline: 2px solid #666; outline-offset: 2px; }
-    #empty-state {
-      text-align: center;
-      padding: 40px 0;
-      color: #999;
+
+    .todo-checkbox.checked::after {
+      content: '\2713';
+      color: white;
       font-size: 14px;
+    }
+
+    .todo-text {
+      flex: 1;
+      font-size: 16px;
+      color: var(--text);
+      transition: all 0.2s;
+      word-break: break-word;
+    }
+
+    .todo-text.completed {
+      text-decoration: line-through;
+      color: var(--text-muted);
+    }
+
+    .delete-btn {
+      width: var(--touch-target);
+      height: var(--touch-target);
+      border: none;
+      background: transparent;
+      color: var(--text-disabled);
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+      margin-left: 8px;
+    }
+
+    .delete-btn:hover {
+      background: var(--danger-bg);
+      color: var(--danger);
+    }
+
+    .stats {
+      padding: 16px 30px;
+      background: var(--bg-muted);
+      border-top: 1px solid var(--border-light);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .clear-completed {
+      color: var(--primary);
+      cursor: pointer;
+      background: none;
+      border: none;
+      font-size: 13px;
+      min-height: var(--touch-target);
+      display: flex;
+      align-items: center;
+    }
+
+    .clear-completed:hover {
+      text-decoration: underline;
+    }
+
+    .clear-completed:disabled {
+      color: var(--text-disabled);
+      cursor: not-allowed;
+      text-decoration: none;
+    }
+
+    /* Toast 通知 */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: #333;
+      color: white;
+      padding: 12px 24px;
+      border-radius: var(--radius-md);
+      font-size: 14px;
+      z-index: 1000;
+      opacity: 0;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+      max-width: 90vw;
+      text-align: center;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    /* Canvas 粒子层 */
+    #particleCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 999;
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 20px 12px;
+      }
+
+      .container {
+        border-radius: 12px;
+      }
+
+      .input-area,
+      .header,
+      .stats {
+        padding-left: 20px;
+        padding-right: 20px;
+      }
+
+      .todo-list {
+        padding-left: 20px;
+        padding-right: 20px;
+      }
     }
   </style>
 </head>
 <body>
-  <ul id="task-list"></ul>
-  <div id="input-row">
-    <input type="text" id="task-input" placeholder="Add a task..." maxlength="1000" autocomplete="off">
-    <button id="add-btn">Add</button>
+  <canvas id="particleCanvas"></canvas>
+
+  <div class="container">
+    <div class="header">
+      <h1>待办事项</h1>
+      <p>保持专注，高效完成每一天</p>
+    </div>
+
+    <div class="input-area">
+      <div class="input-wrapper">
+        <input
+          type="text"
+          id="newTodo"
+          placeholder="添加新任务，按回车确认..."
+          autocomplete="off"
+          maxlength="200"
+        >
+        <button id="addBtn">添加</button>
+      </div>
+      <div class="char-counter" id="charCounter"></div>
+    </div>
+
+    <div class="todo-list" id="todoList">
+      <div class="empty-state" id="emptyState">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+        </svg>
+        <p>还没有任务，添加一个吧！</p>
+      </div>
+    </div>
+
+    <div class="stats" id="stats" style="display: none;">
+      <span id="statsText">0 个任务</span>
+      <button class="clear-completed" id="clearCompleted" disabled>清除已完成</button>
+    </div>
   </div>
 
-  <script>
-    // Data model: {id: string, text: string}
-    // Storage key: todos:v1 (namespaced for future migrations)
-    var STORAGE_KEY = 'todos:v1';
-    var tasks = [];
+  <div class="toast" id="toast"></div>
 
-    // Load tasks from localStorage with error handling for corrupted data
-    function loadTasks() {
-      try {
-        var data = localStorage.getItem(STORAGE_KEY);
-        tasks = data ? JSON.parse(data) : [];
-      } catch (e) {
-        console.error('Failed to load tasks:', e);
-        tasks = [];
+  <script>
+    // ===== DOM 元素 =====
+    var newTodoInput = document.getElementById('newTodo');
+    var addBtn = document.getElementById('addBtn');
+    var todoList = document.getElementById('todoList');
+    var emptyState = document.getElementById('emptyState');
+    var stats = document.getElementById('stats');
+    var statsText = document.getElementById('statsText');
+    var clearCompletedBtn = document.getElementById('clearCompleted');
+    var charCounter = document.getElementById('charCounter');
+    var toast = document.getElementById('toast');
+
+    // ===== 数据存储 =====
+    var todos = [];
+    var saveError = false;
+    var _nextId = Date.now();
+
+    try {
+      var raw = localStorage.getItem('todos');
+      // Migrate from legacy key if new key is empty
+      if (!raw) {
+        var legacy = localStorage.getItem('todos:v1');
+        if (legacy) {
+          todos = JSON.parse(legacy);
+          if (Array.isArray(todos)) {
+            localStorage.setItem('todos', legacy);
+            localStorage.removeItem('todos:v1');
+          }
+        }
+      } else {
+        todos = JSON.parse(raw);
+      }
+      if (!Array.isArray(todos)) todos = [];
+      // Ensure next ID is unique
+      if (todos.length > 0) {
+        var maxId = 0;
+        for (var i = 0; i < todos.length; i++) {
+          if (todos[i].id > maxId) maxId = todos[i].id;
+        }
+        _nextId = maxId + 1;
+      }
+    } catch (e) {
+      console.warn('Failed to load todos from localStorage:', e);
+      toast.textContent = '数据加载失败，使用空白状态';
+      toast.classList.add('show');
+      setTimeout(function() { toast.classList.remove('show'); }, 3000);
+    }
+
+    // ===== Toast 通知 =====
+    var toastTimer = null;
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add('show');
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3000);
+    }
+
+    // ===== 字符计数器 =====
+    function updateCharCounter() {
+      const len = newTodoInput.value.length;
+      if (len > 0) {
+        charCounter.textContent = len + ' / 200';
+        charCounter.classList.toggle('warn', len > 150);
+      } else {
+        charCounter.textContent = '';
       }
     }
 
-    // Save tasks to localStorage with quota error handling
-    function saveTasks() {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
-      } catch (e) {
-        if (e.name === 'QuotaExceededError') {
-          alert('Storage is full. Delete some tasks to free up space.');
-        } else {
-          console.error('Failed to save tasks:', e);
+    // ===== 转义 HTML 防止 XSS =====
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ===== 渲染列表 =====
+    function render() {
+      if (todos.length === 0) {
+        todoList.innerHTML = '';
+        todoList.appendChild(emptyState);
+        emptyState.style.display = 'block';
+        stats.style.display = 'none';
+        return;
+      }
+
+      emptyState.style.display = 'none';
+      stats.style.display = 'flex';
+
+      todoList.innerHTML = todos.map(todo =>
+        '<div class="todo-item" data-id="' + todo.id + '">' +
+          '<div class="todo-checkbox ' + (todo.completed ? 'checked' : '') + '" role="checkbox" aria-checked="' + todo.completed + '" tabindex="0"></div>' +
+          '<span class="todo-text ' + (todo.completed ? 'completed' : '') + '">' + escapeHtml(todo.text) + '</span>' +
+          '<button class="delete-btn" data-delete="' + todo.id + '" title="删除" aria-label="删除任务">\u00d7</button>' +
+        '</div>'
+      ).join('');
+
+      var completedCount = todos.filter(function(t) { return t.completed; }).length;
+      var activeCount = todos.length - completedCount;
+      statsText.textContent = activeCount + ' 个待办，' + completedCount + ' 个已完成';
+      clearCompletedBtn.disabled = completedCount === 0;
+    }
+
+    // ===== 添加任务 =====
+    function addTodo() {
+      const text = newTodoInput.value.trim();
+      if (!text) return;
+
+      todos.push({
+        id: _nextId++,
+        text: text,
+        completed: false
+      });
+
+      newTodoInput.value = '';
+      updateCharCounter();
+      saveTodos();
+      render();
+    }
+
+    // ===== 切换完成状态 =====
+    function toggleTodo(id) {
+      const todo = todos.find(t => t.id === id);
+      if (todo) {
+        const wasActive = !todo.completed;
+        todo.completed = !todo.completed;
+        saveTodos();
+        render();
+        if (wasActive) {
+          celebrate(todo.id);
         }
       }
     }
 
-    // Add a new task (validates, trims, truncates to 1000 chars)
-    function addTask(text) {
-      text = (text || '').trim();
-      if (!text) return;
-      if (text.length > 1000) text = text.substring(0, 1000);
-      tasks.push({ id: crypto.randomUUID(), text: text });
-      saveTasks();
+    // ===== 删除任务 =====
+    function deleteTodo(id) {
+      todos = todos.filter(t => t.id !== id);
+      saveTodos();
       render();
     }
 
-    // Delete a task by ID (idempotent)
-    function deleteTask(id) {
-      tasks = tasks.filter(function(t) { return t.id !== id; });
-      saveTasks();
+    // ===== 清除已完成 =====
+    function clearCompleted() {
+      todos = todos.filter(t => !t.completed);
+      saveTodos();
       render();
     }
 
-    // Render the task list (uses textContent for XSS safety)
-    function render() {
-      var list = document.getElementById('task-list');
-      list.innerHTML = '';
+    // ===== 保存到本地存储 =====
+    function saveTodos() {
+      try {
+        localStorage.setItem('todos', JSON.stringify(todos));
+        if (saveError) {
+          saveError = false;
+          showToast('存储空间已恢复');
+        }
+      } catch (e) {
+        if (e.name === 'QuotaExceededError' || e.code === 22) {
+          saveError = true;
+          showToast('存储空间已满，数据仅保存在当前页面');
+        } else {
+          console.warn('Failed to save todos:', e);
+        }
+      }
+    }
 
-      if (tasks.length === 0) {
-        var empty = document.createElement('div');
-        empty.id = 'empty-state';
-        empty.textContent = 'No tasks yet — type one above';
-        list.parentNode.insertBefore(empty, list.nextSibling);
+    // ===== 事件委托 =====
+    todoList.addEventListener('click', function(e) {
+      var deleteBtn = e.target.closest('[data-delete]');
+      if (deleteBtn) {
+        var id = parseInt(deleteBtn.getAttribute('data-delete'), 10);
+        deleteTodo(id);
         return;
       }
 
-      // Remove empty state if it exists
-      var emptyState = document.getElementById('empty-state');
-      if (emptyState) emptyState.remove();
+      var todoItem = e.target.closest('.todo-item');
+      if (todoItem) {
+        var id = parseInt(todoItem.getAttribute('data-id'), 10);
+        if (!e.target.closest('.delete-btn')) {
+          toggleTodo(id);
+        }
+      }
+    });
 
-      for (var i = 0; i < tasks.length; i++) {
-        var li = document.createElement('li');
-        var span = document.createElement('span');
-        span.textContent = tasks[i].text; // XSS-safe
-        li.appendChild(span);
+    // 键盘支持
+    todoList.addEventListener('keydown', function(e) {
+      if (e.key === ' ' || e.key === 'Enter') {
+        var checkbox = e.target.closest('.todo-checkbox');
+        if (checkbox) {
+          e.preventDefault();
+          var todoItem = e.target.closest('.todo-item');
+          if (todoItem) {
+            toggleTodo(parseInt(todoItem.getAttribute('data-id'), 10));
+          }
+        }
+      }
+    });
 
-        var btn = document.createElement('button');
-        btn.className = 'delete-btn';
-        btn.textContent = 'X';
-        btn.setAttribute('aria-label', 'Delete task');
-        (function(id) {
-          btn.addEventListener('click', function() { deleteTask(id); });
-        })(tasks[i].id);
+    addBtn.addEventListener('click', addTodo);
+    newTodoInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') addTodo();
+    });
+    newTodoInput.addEventListener('input', updateCharCounter);
+    clearCompletedBtn.addEventListener('click', clearCompleted);
 
-        li.appendChild(btn);
-        list.appendChild(li);
+    // ===== Canvas 粒子庆祝 =====
+    var canvas = document.getElementById('particleCanvas');
+    var ctx = canvas.getContext('2d');
+    var particles = [];
+    var animationId = null;
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    function celebrate(todoId) {
+      if (particles.length > 200) return;
+
+      var checkboxEl = document.querySelector('.todo-item[data-id="' + todoId + '"] .todo-checkbox');
+      if (!checkboxEl) return;
+
+      var rect = checkboxEl.getBoundingClientRect();
+      var x = rect.left + rect.width / 2;
+      var y = rect.top + rect.height / 2;
+
+      var colors = ['#2563eb', '#0891b2', '#06b6d4', '#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
+
+      for (var i = 0; i < 20; i++) {
+        var angle = (Math.PI * 2 * i) / 20 + (Math.random() - 0.5) * 0.5;
+        var speed = 1.5 + Math.random() * 2.5;
+        particles.push({
+          x: x,
+          y: y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed - 1,
+          size: 3 + Math.random() * 4,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          alpha: 1,
+          decay: 0.015 + Math.random() * 0.01,
+          rotation: Math.random() * Math.PI * 2,
+          rotationSpeed: (Math.random() - 0.5) * 0.1,
+          shape: Math.random() > 0.5 ? 'circle' : 'square'
+        });
+      }
+
+      if (!animationId) {
+        animateParticles();
       }
     }
 
-    // Event listeners
-    document.getElementById('add-btn').addEventListener('click', function() {
-      var input = document.getElementById('task-input');
-      addTask(input.value);
-      input.value = '';
-      input.focus();
-    });
+    function animateParticles() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    document.getElementById('task-input').addEventListener('keydown', function(e) {
-      if (e.key === 'Enter') {
-        addTask(e.target.value);
-        e.target.value = '';
+      for (var i = particles.length - 1; i >= 0; i--) {
+        var p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.05;
+        p.alpha -= p.decay;
+        p.rotation += p.rotationSpeed;
+
+        if (p.alpha <= 0) {
+          particles.splice(i, 1);
+          continue;
+        }
+
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rotation);
+        ctx.globalAlpha = p.alpha;
+        ctx.fillStyle = p.color;
+
+        if (p.shape === 'circle') {
+          ctx.beginPath();
+          ctx.arc(0, 0, p.size / 2, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+        }
+
+        ctx.restore();
       }
-    });
 
-    // Initialize
-    loadTasks();
+      if (particles.length > 0) {
+        animationId = requestAnimationFrame(animateParticles);
+      } else {
+        animationId = null;
+      }
+    }
+
+    // ===== 初始化 =====
     render();
   </script>
 </body>
